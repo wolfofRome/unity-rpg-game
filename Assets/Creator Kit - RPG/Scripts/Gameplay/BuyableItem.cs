@@ -25,7 +25,7 @@ public class BuyableItem : MonoBehaviour
     }
 
     //  colision enter 2d trigger
-    public async void OnCollisionEnter2D(Collider2D collider)
+    public async void OnCollisionEnter2D(Collision2D collider)
     {
         // Grab the "Character" Game object from global scope
         var character = GameObject.Find("Character");

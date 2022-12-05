@@ -37,7 +37,7 @@ namespace RPGM.Gameplay
             var buyableItem = gameObject.GetComponent<BuyableItem>();
             if (buyableItem != null)
             {
-                buyableItem.OnCollisionEnter2D(collision.collider);
+                buyableItem.OnCollisionEnter2D (collision);
             }
         }
 

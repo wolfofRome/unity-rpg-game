@@ -6,7 +6,23 @@ namespace RPGM.Core
 {
     public class Web3 : MonoBehaviour
     {
-        private ThirdwebSDK sdk = new ThirdwebSDK("optimism-goerli");
+        // Instantiate the SDK with Gasless Transactions
+        private ThirdwebSDK
+            sdk =
+                new ThirdwebSDK("optimism-goerli",
+                    new ThirdwebSDK.Options()
+                    {
+                        gasless =
+                            new ThirdwebSDK.GaslessOptions()
+                            {
+                                openzeppelin =
+                                    new ThirdwebSDK.OZDefenderOptions()
+                                    {
+                                        relayerUrl =
+                                            "https://api.defender.openzeppelin.com/autotasks/c2e9a6ca-f2e8-4521-926b-1f9daec2dcb8/runs/webhook/826a5b67-d55d-49dc-8651-5db958ba22b2/DPtceJtayVGgKSDejaFnWk"
+                                    }
+                            }
+                    });
 
         public async Task<bool> IsConnected()
         {
@@ -15,8 +31,14 @@ namespace RPGM.Core
 
         public async Task<string> Connect()
         {
-            string addr = await sdk.wallet.Connect();
-            sdk.wallet.SwitchNetwork(420);
+            string addr =
+                await sdk
+                    .wallet
+                    .Connect(new WalletConnection()
+                    {
+                        provider = WalletProvider.CoinbaseWallet, // Use Coinbase Wallet
+                        chainId = 420 // Switch the wallet Optimism Goerli network on connection
+                    });
             return addr;
         }
 
@@ -26,12 +48,10 @@ namespace RPGM.Core
                 .GetContract("0x07E29106198B3b43Ada9A833Aee3e7CE74D38446");
         }
 
-        public async Task<TransactionResult[]> Claim()
+        public async Task<TransactionResult> Claim()
         {
-            var contract = GetTokenDropContract();
-
             await Connect();
-
+            var contract = GetTokenDropContract();
             return await contract.ERC20.Claim("10");
         }
 

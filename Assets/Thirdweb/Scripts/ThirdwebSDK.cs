@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Thirdweb
 {
     /// <summary>
@@ -11,7 +13,9 @@ namespace Thirdweb
         [System.Serializable]
         public struct Options
         {
+            public string appName;
             public GaslessOptions? gasless;
+            public string ipfsGatewayUrl;
         }
 
         /// <summary>
@@ -61,7 +65,7 @@ namespace Thirdweb
         /// </summary>
         /// <param name="chainOrRPC">The chain name or RPC url to connect to</param>
         /// <param name="options">Configuration options</param>
-        public ThirdwebSDK(string chainOrRPC, Options options = new Options()) 
+        public ThirdwebSDK(string chainOrRPC, Options options = new Options())
         {
             this.chainOrRPC = chainOrRPC;
             this.wallet = new Wallet();
@@ -78,6 +82,15 @@ namespace Thirdweb
         public Contract GetContract(string address, string abi = null)
         {
             return new Contract(this.chainOrRPC, address, abi);
+        }
+
+        /// <summary>
+        /// Prompt the user to fund their wallet using one of the thirdweb pay providers (defaults to Coinbase Pay).
+        /// </summary>
+        /// <param name="options">The options like wallet address to fund, on which chain, etc</param>
+        public async Task FundWallet(FundWalletOptions options)
+        {
+            await Bridge.FundWallet(options);
         }
     }
 }

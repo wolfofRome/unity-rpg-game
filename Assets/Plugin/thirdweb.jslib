@@ -17,7 +17,7 @@ var plugin = {
       })
       .catch((err) => {
         console.error("ThirdwebSDK invoke error", err);
-        var msg = err.message;
+        var msg = err.reason || err.message;
         var bufferSize = lengthBytesUTF8(msg) + 1;
         var buffer = _malloc(bufferSize);
         stringToUTF8(msg, buffer, bufferSize);
@@ -27,7 +27,7 @@ var plugin = {
   ThirdwebInitialize: function (chain, options) {
     window.bridge.initialize(UTF8ToString(chain), UTF8ToString(options));
   },
-  ThirdwebConnect: function (taskId, cb) {
+  ThirdwebConnect: function (taskId, wallet, chainId, cb) {
     // convert taskId from pointer to str and allocate it to keep in memory
     var id = UTF8ToString(taskId);
     var idSize = lengthBytesUTF8(id) + 1;
@@ -35,7 +35,7 @@ var plugin = {
     stringToUTF8(id, idPtr, idSize);
     // execute bridge call
     window.bridge
-      .connect()
+      .connect(UTF8ToString(wallet), chainId)
       .then((address) => {
         if (address) {
           var bufferSize = lengthBytesUTF8(address) + 1;
@@ -54,8 +54,65 @@ var plugin = {
         dynCall_viii(cb, idPtr, null, buffer);
       });
   },
-  ThirdwebSwitchNetwork: async function (chainId) {
-    await window.bridge.switchNetwork(chainId);
+  ThirdwebSwitchNetwork: async function (taskId, chainId, cb) {
+    // convert taskId from pointer to str and allocate it to keep in memory
+    var id = UTF8ToString(taskId);
+    var idSize = lengthBytesUTF8(id) + 1;
+    var idPtr = _malloc(idSize);
+    stringToUTF8(id, idPtr, idSize);
+    // execute bridge call
+    window.bridge
+      .switchNetwork(chainId)
+      .then(() => {
+        dynCall_viii(cb, idPtr, null, null);
+      })
+      .catch((err) => {
+        var msg = err.message;
+        var bufferSize = lengthBytesUTF8(msg) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(msg, buffer, bufferSize);
+        dynCall_viii(cb, idPtr, null, buffer);
+      });
+  },
+  ThirdwebDisconnect: async function (taskId, cb) {
+    // convert taskId from pointer to str and allocate it to keep in memory
+    var id = UTF8ToString(taskId);
+    var idSize = lengthBytesUTF8(id) + 1;
+    var idPtr = _malloc(idSize);
+    stringToUTF8(id, idPtr, idSize);
+    // execute bridge call
+    window.bridge
+      .disconnect()
+      .then(() => {
+        dynCall_viii(cb, idPtr, idPtr, null);
+      })
+      .catch((err) => {
+        var msg = err.message;
+        var bufferSize = lengthBytesUTF8(msg) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(msg, buffer, bufferSize);
+        dynCall_viii(cb, idPtr, null, buffer);
+      });
+  },
+  ThirdwebFundWallet: async function (taskId, payload, cb) {
+    // convert taskId from pointer to str and allocate it to keep in memory
+    var id = UTF8ToString(taskId);
+    var idSize = lengthBytesUTF8(id) + 1;
+    var idPtr = _malloc(idSize);
+    stringToUTF8(id, idPtr, idSize);
+    // execute bridge call
+    window.bridge
+      .fundWallet(UTF8ToString(payload))
+      .then(() => {
+        dynCall_viii(cb, idPtr, idPtr, null);
+      })
+      .catch((err) => {
+        var msg = err.message;
+        var bufferSize = lengthBytesUTF8(msg) + 1;
+        var buffer = _malloc(bufferSize);
+        stringToUTF8(msg, buffer, bufferSize);
+        dynCall_viii(cb, idPtr, null, buffer);
+      });
   },
 };
 

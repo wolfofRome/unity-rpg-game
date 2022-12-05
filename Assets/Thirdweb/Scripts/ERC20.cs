@@ -6,10 +6,8 @@ namespace Thirdweb
     /// <summary>
     /// Interact with any ERC20 compatible contract.
     /// </summary>
-    public class ERC20
+    public class ERC20 : Routable
     {
-        public string chain;
-        public string address;
         /// <summary>
         /// Handle signature minting functionality
         /// </summary>
@@ -22,12 +20,10 @@ namespace Thirdweb
         /// <summary>
         /// Interact with any ERC20 compatible contract.
         /// </summary>
-        public ERC20(string chain, string address)
+        public ERC20(string parentRoute) : base(Routable.append(parentRoute, "erc20"))
         {
-            this.chain = chain;
-            this.address = address;
-            this.signature = new ERC20Signature(chain, address);
-            this.claimConditions = new ERC20ClaimConditions(chain, address);
+            this.signature = new ERC20Signature(baseRoute);
+            this.claimConditions = new ERC20ClaimConditions(baseRoute);
         }
 
         // READ FUNCTIONS
@@ -59,17 +55,17 @@ namespace Thirdweb
         /// <summary>
         /// Get how much allowance the given address is allowed to spend on behalf of the connected wallet
         /// </summary>
-        public async Task<string> Allowance(string spender)
+        public async Task<CurrencyValue> Allowance(string spender)
         {
-            return await Bridge.InvokeRoute<string>(getRoute("allowance"), Utils.ToJsonStringArray(spender));
+            return await Bridge.InvokeRoute<CurrencyValue>(getRoute("allowance"), Utils.ToJsonStringArray(spender));
         }
 
         /// <summary>
         /// Get how much allowance the given address is allowed to spend on behalf of the specified wallet
         /// </summary>
-        public async Task<string> AllowanceOf(string owner, string spender)
+        public async Task<CurrencyValue> AllowanceOf(string owner, string spender)
         {
-            return await Bridge.InvokeRoute<string>(getRoute("allowanceOf"), Utils.ToJsonStringArray(owner, spender));
+            return await Bridge.InvokeRoute<CurrencyValue>(getRoute("allowanceOf"), Utils.ToJsonStringArray(owner, spender));
         }
 
         /// <summary>
@@ -85,7 +81,7 @@ namespace Thirdweb
         /// <summary>
         /// Set how much allowance the given address is allowed to spend on behalf of the connected wallet
         /// </summary>
-        public async Task<TransactionResult> SetAllowance(string spender, bool amount)
+        public async Task<TransactionResult> SetAllowance(string spender, string amount)
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("setAllowance"), Utils.ToJsonStringArray(spender, amount));
         }
@@ -109,17 +105,17 @@ namespace Thirdweb
         /// <summary>
         /// Claim a given amount of currency for compatible drop contracts
         /// </summary>
-        public async Task<TransactionResult[]> Claim(string amount)
+        public async Task<TransactionResult> Claim(string amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claim"), Utils.ToJsonStringArray(amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claim"), Utils.ToJsonStringArray(amount));
         }
 
         /// <summary>
         /// Claim a given amount of currency to a given destination wallet for compatible drop contracts
         /// </summary>
-        public async Task<TransactionResult[]> ClaimTo(string address, int amount)
+        public async Task<TransactionResult> ClaimTo(string address, int amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claimTo"), Utils.ToJsonStringArray(address, amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claimTo"), Utils.ToJsonStringArray(address, amount));
         }
 
         /// <summary>
@@ -137,16 +133,9 @@ namespace Thirdweb
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("mintTo"), Utils.ToJsonStringArray(address, amount));
         }
-
-        // PRIVATE
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc20." + functionPath;
-        }
     }
 
     [System.Serializable]
-    #nullable enable
     public class ERC20MintPayload
     {
         public string to;
@@ -159,7 +148,8 @@ namespace Thirdweb
         // public long mintStartTime;
         // public long mintEndTime;
 
-        public ERC20MintPayload(string receiverAddress, string quantity) {
+        public ERC20MintPayload(string receiverAddress, string quantity)
+        {
             this.to = receiverAddress;
             this.quantity = quantity;
             this.price = "0";
@@ -195,17 +185,12 @@ namespace Thirdweb
     /// <summary>
     /// Fetch claim conditions for a given ERC20 drop contract
     /// </summary>
-    public class ERC20ClaimConditions
+#nullable enable
+    public class ERC20ClaimConditions : Routable
     {
-        public string chain;
-        public string address;
-
-        public ERC20ClaimConditions(string chain, string address)
+        public ERC20ClaimConditions(string parentRoute) : base(Routable.append(parentRoute, "claimConditions"))
         {
-            this.chain = chain;
-            this.address = address;
         }
-
 
         /// <summary>
         /// Get the active claim condition
@@ -238,28 +223,19 @@ namespace Thirdweb
         {
             return await Bridge.InvokeRoute<bool>(getRoute("getClaimerProofs"), Utils.ToJsonStringArray(claimerAddress));
         }
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc20.claimConditions." + functionPath;
-        }
     }
 
 
     /// <summary>
     /// Generate, verify and mint signed mintable payloads
     /// </summary>
-    public class ERC20Signature
+    public class ERC20Signature : Routable
     {
-        public string chain;
-        public string address;
-
         /// <summary>
         /// Generate, verify and mint signed mintable payloads
         /// </summary>
-        public ERC20Signature(string chain, string address)
+        public ERC20Signature(string parentRoute) : base(Routable.append(parentRoute, "signature"))
         {
-            this.chain = chain;
-            this.address = address;
         }
 
         /// <summary>
@@ -284,10 +260,6 @@ namespace Thirdweb
         public async Task<TransactionResult> Mint(ERC20SignedPayload signedPayload)
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("mint"), Utils.ToJsonStringArray(signedPayload));
-        }
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc20.signature." + functionPath;
         }
     }
 }

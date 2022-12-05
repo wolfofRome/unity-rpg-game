@@ -5,17 +5,15 @@ using System.Threading.Tasks;
 namespace Thirdweb
 {
     /// <summary>
-    /// Interact with any <c>ERC1155</c> compatible contract.
+    /// Interact with any ERC1155 compatible contract.
     /// </summary>
-    public class ERC1155
+    public class ERC1155 : Routable
     {
-        public string chain;
-        public string address;
         /// <summary>
         /// Handle signature minting functionality
         /// </summary>
         public ERC1155Signature signature;
-                /// <summary>
+        /// <summary>
         /// Query claim conditions
         /// </summary>
         public ERC1155ClaimConditions claimConditions;
@@ -23,12 +21,10 @@ namespace Thirdweb
         /// <summary>
         /// Interact with any ERC1155 compatible contract.
         /// </summary>
-        public ERC1155(string chain, string address)
+        public ERC1155(string parentRoute) : base(Routable.append(parentRoute, "erc1155"))
         {
-            this.chain = chain;
-            this.address = address;
-            this.signature = new ERC1155Signature(chain, address);
-            this.claimConditions = new ERC1155ClaimConditions(chain, address);
+            this.signature = new ERC1155Signature(baseRoute);
+            this.claimConditions = new ERC1155ClaimConditions(baseRoute);
         }
 
         // READ FUNCTIONS
@@ -44,9 +40,9 @@ namespace Thirdweb
         /// <summary>
         /// Get a all NFTs in this contract
         /// </summary>
-        public async Task<List<NFT>> GetAll()
+        public async Task<List<NFT>> GetAll(QueryAllParams queryParams = null)
         {
-            return await Bridge.InvokeRoute<List<NFT>>(getRoute("getAll"), new string[] { });
+            return await Bridge.InvokeRoute<List<NFT>>(getRoute("getAll"), Utils.ToJsonStringArray(queryParams));
         }
 
         /// <summary>
@@ -69,7 +65,7 @@ namespace Thirdweb
         /// <summary>
         /// Get the balance of the given NFT for the given wallet address
         /// </summary>
-        public async Task<string> BalanceOf(string address, string tokenId) 
+        public async Task<string> BalanceOf(string address, string tokenId)
         {
             return await Bridge.InvokeRoute<string>(getRoute("balanceOf"), Utils.ToJsonStringArray(address, tokenId));
         }
@@ -94,7 +90,7 @@ namespace Thirdweb
         /// </summary>
         public async Task<int> TotalSupply(string tokenId)
         {
-            return await Bridge.InvokeRoute<int>(getRoute("totalUnclaimedSupply"), Utils.ToJsonStringArray(tokenId));
+            return await Bridge.InvokeRoute<int>(getRoute("totalSupply"), Utils.ToJsonStringArray(tokenId));
         }
 
         // WRITE FUNCTIONS
@@ -104,7 +100,7 @@ namespace Thirdweb
         /// </summary>
         public async Task<TransactionResult> SetApprovalForAll(string contractToApprove, bool approved)
         {
-            return await Bridge.InvokeRoute<TransactionResult>(getRoute("isApproved"), Utils.ToJsonStringArray(contractToApprove, approved));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("setApprovalForAll"), Utils.ToJsonStringArray(contractToApprove, approved));
         }
 
         /// <summary>
@@ -126,17 +122,17 @@ namespace Thirdweb
         /// <summary>
         /// Claim NFTs from a Drop contract
         /// </summary>
-        public async Task<TransactionResult[]> Claim(string tokenId, int amount)
+        public async Task<TransactionResult> Claim(string tokenId, int amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claim"), Utils.ToJsonStringArray(tokenId, amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claim"), Utils.ToJsonStringArray(tokenId, amount));
         }
 
         /// <summary>
         /// Claim NFTs from a Drop contract and send them to the given address
         /// </summary>
-        public async Task<TransactionResult[]> ClaimTo(string address, string tokenId, int amount)
+        public async Task<TransactionResult> ClaimTo(string address, string tokenId, int amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claimTo"), Utils.ToJsonStringArray(address, tokenId, amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claimTo"), Utils.ToJsonStringArray(address, tokenId, amount));
         }
 
         /// <summary>
@@ -170,26 +166,15 @@ namespace Thirdweb
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("mintAdditionalSupplyTo"), Utils.ToJsonStringArray(address, tokenId, additionalSupply));
         }
-
-        // PRIVATE
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc1155." + functionPath;
-        }
     }
 
-     /// <summary>
+    /// <summary>
     /// Fetch claim conditions for a given ERC1155 drop contract
     /// </summary>
-    public class ERC1155ClaimConditions
+    public class ERC1155ClaimConditions : Routable
     {
-        public string chain;
-        public string address;
-
-        public ERC1155ClaimConditions(string chain, string address)
+        public ERC1155ClaimConditions(string parentRoute) : base(Routable.append(parentRoute, "claimConditions"))
         {
-            this.chain = chain;
-            this.address = address;
         }
 
         /// <summary>
@@ -223,15 +208,11 @@ namespace Thirdweb
         {
             return await Bridge.InvokeRoute<bool>(getRoute("getClaimerProofs"), Utils.ToJsonStringArray(claimerAddress));
         }
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc1155.claimConditions." + functionPath;
-        }
     }
 
     // TODO switch to another JSON serializer that supports polymorphism
     [System.Serializable]
-    #nullable enable
+#nullable enable
     public class ERC1155MintPayload
     {
         public string to;
@@ -247,7 +228,8 @@ namespace Thirdweb
         // public long mintStartTime;
         // public long mintEndTime;
 
-        public ERC1155MintPayload(string receiverAddress, NFTMetadata metadata) {
+        public ERC1155MintPayload(string receiverAddress, NFTMetadata metadata)
+        {
             this.metadata = metadata;
             this.to = receiverAddress;
             this.price = "0";
@@ -279,7 +261,8 @@ namespace Thirdweb
         // public long mintStartTime;
         // public long mintEndTime;
 
-        public ERC1155MintAdditionalPayload(string receiverAddress, string tokenId) {
+        public ERC1155MintAdditionalPayload(string receiverAddress, string tokenId)
+        {
             this.tokenId = tokenId;
             this.to = receiverAddress;
             this.price = "0";
@@ -319,17 +302,21 @@ namespace Thirdweb
         public ERC1155SignedPayloadOutput payload;
     }
 
-    public class ERC1155Signature
+    /// <summary>
+    /// Generate, verify and mint signed mintable payloads
+    /// </summary>
+    public class ERC1155Signature : Routable
     {
-        public string chain;
-        public string address;
-
-        public ERC1155Signature(string chain, string address)
+        /// <summary>
+        /// Generate, verify and mint signed mintable payloads
+        /// </summary>
+        public ERC1155Signature(string parentRoute) : base(Routable.append(parentRoute, "signature"))
         {
-            this.chain = chain;
-            this.address = address;
         }
 
+        /// <summary>
+        /// Generate a signed mintable payload. Requires minting permission.
+        /// </summary>
         public async Task<ERC1155SignedPayload> Generate(ERC1155MintPayload payloadToSign)
         {
             return await Bridge.InvokeRoute<ERC1155SignedPayload>(getRoute("generate"), Utils.ToJsonStringArray(payloadToSign));
@@ -340,18 +327,20 @@ namespace Thirdweb
             return await Bridge.InvokeRoute<ERC1155SignedPayload>(getRoute("generateFromTokenId"), Utils.ToJsonStringArray(payloadToSign));
         }
 
+        /// <summary>
+        /// Verify that a signed mintable payload is valid
+        /// </summary>
         public async Task<bool> Verify(ERC1155SignedPayload signedPayload)
         {
             return await Bridge.InvokeRoute<bool>(getRoute("verify"), Utils.ToJsonStringArray(signedPayload));
         }
 
+        /// <summary>
+        /// Mint a signed mintable payload
+        /// </summary>
         public async Task<TransactionResult> Mint(ERC1155SignedPayload signedPayload)
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("mint"), Utils.ToJsonStringArray(signedPayload));
-        }
-
-        private string getRoute(string functionPath) {
-            return this.address + ".erc1155.signature." + functionPath;
         }
     }
 }

@@ -5,23 +5,40 @@ namespace Thirdweb
     /// <summary>
     /// Connect and Interact with a Wallet.
     /// </summary>
-    public class Wallet
+    public class Wallet : Routable
     {
-        /// <summary>
-        /// Connect a user's wallet via browser extension
-        /// </summary>
-        public Task<string> Connect() 
+        public Wallet() : base($"sdk{subSeparator}wallet")
         {
-            return Bridge.Connect();
+        }
+
+        /// <summary>
+        /// Connect a user's wallet via a given wallet provider
+        /// </summary>
+        /// <param name="walletConnection">The wallet provider and chainId to connect to. Defaults to the injected browser extension.</param>
+        public Task<string> Connect(WalletConnection? walletConnection = null)
+        {
+            var connection = walletConnection ?? new WalletConnection()
+            {
+                provider = WalletProvider.Injected,
+            }; ;
+            return Bridge.Connect(connection);
+        }
+
+        /// <summary>
+        /// Disconnect the user's wallet
+        /// </summary>
+        public Task Disconnect()
+        {
+            return Bridge.Disconnect();
         }
 
         /// <summary>
         /// Authenticate the user by signing a payload that can be used to securely identify users. See https://portal.thirdweb.com/auth
         /// </summary>
         /// <param name="domain">The domain to authenticate to</param>
-        public async Task<LoginPayload> Authenticate(string domain) 
+        public async Task<LoginPayload> Authenticate(string domain)
         {
-            return await Bridge.InvokeRoute<LoginPayload>("sdk#auth.login", Utils.ToJsonStringArray(domain));
+            return await Bridge.InvokeRoute<LoginPayload>($"sdk{subSeparator}auth{separator}login", Utils.ToJsonStringArray(domain));
         }
 
         /// <summary>
@@ -60,9 +77,9 @@ namespace Thirdweb
         /// <summary>
         /// Prompt the connected wallet to switch to the giiven chainId
         /// </summary>
-        public void SwitchNetwork(int chainId)
+        public async Task SwitchNetwork(int chainId)
         {
-            Bridge.SwitchNetwork(chainId);
+            await Bridge.SwitchNetwork(chainId);
         }
 
         /// <summary>
@@ -96,11 +113,28 @@ namespace Thirdweb
         {
             return await Bridge.InvokeRoute<TransactionResult>(getRoute("sendRawTransaction"), Utils.ToJsonStringArray(transactionRequest));
         }
+    }
 
-        /// PRIVATE
+    public struct WalletConnection
+    {
+        public WalletProvider provider;
+        public int chainId;
+    }
 
-        private string getRoute(string functionPath) {
-            return "sdk#wallet." + functionPath;
+    public class WalletProvider
+    {
+        private WalletProvider(string value) { Value = value; }
+
+        public static string Value { get; private set; }
+
+        public static WalletProvider MetaMask { get { return new WalletProvider("metamask"); } }
+        public static WalletProvider CoinbaseWallet { get { return new WalletProvider("coinbaseWallet"); } }
+        public static WalletProvider WalletConnect { get { return new WalletProvider("walletConnect"); } }
+        public static WalletProvider Injected { get { return new WalletProvider("injected"); } }
+
+        public override string ToString()
+        {
+            return Value;
         }
     }
 }

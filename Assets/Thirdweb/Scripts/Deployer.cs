@@ -5,8 +5,13 @@ namespace Thirdweb
     /// <summary>
     /// Deploy contracts to the blockchain.
     /// </summary>
-    public class Deployer
+    public class Deployer : Routable
     {
+
+        public Deployer() : base($"sdk{subSeparator}deployer")
+        {
+        }
+
         public async Task<string> DeployNFTCollection(NFTContractDeployMetadata metadata)
         {
             return await Bridge.InvokeRoute<string>(getRoute("deployNFTCollection"), Utils.ToJsonStringArray(metadata));
@@ -52,23 +57,19 @@ namespace Thirdweb
             return await Bridge.InvokeRoute<string>(getRoute("deployTokenDrop"), Utils.ToJsonStringArray(metadata));
         }
 
-        public async Task<string> DeployTokenDrop(MarketplaceContractDeployMetadata metadata)
+        public async Task<string> DeployMarketplace(MarketplaceContractDeployMetadata metadata)
         {
             return await Bridge.InvokeRoute<string>(getRoute("deployMarketplace"), Utils.ToJsonStringArray(metadata));
         }
 
-        public async Task<string> DeployReleasedContract(string releaserAddress, string contractName, object[] constructorParams) {
+        public async Task<string> DeployReleasedContract(string releaserAddress, string contractName, object[] constructorParams)
+        {
             return await Bridge.InvokeRoute<string>(getRoute("deployReleasedContract"), Utils.ToJsonStringArray(releaserAddress, contractName, constructorParams));
         }
 
-        public async Task<string> DeployFromContractUri(string uri, object[] constructorParams) {
+        public async Task<string> DeployFromContractUri(string uri, object[] constructorParams)
+        {
             return await Bridge.InvokeRoute<string>(getRoute("deployContractFromUri"), Utils.ToJsonStringArray(uri, constructorParams));
-        }
-
-        /// PRIVATE
-
-        private string getRoute(string functionPath) {
-            return "sdk#deployer." + functionPath;
         }
     }
 
