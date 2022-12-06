@@ -53,12 +53,12 @@ namespace RPGM.Events
             var sr = gameObject.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
-                // put position above the sprite BUT  still on the screen.
+                // put position above the sprite BUT still on the screen.
                 position.y = sr.bounds.max.y;
                 position.y = Mathf.Clamp(position.y, 0, 100);
             }
 
-            //show the dialog
+            // show the dialog
             model.dialog.Show(position, ci.text);
             var animator = gameObject.GetComponent<Animator>();
             if (animator != null)
@@ -122,17 +122,8 @@ namespace RPGM.Events
                                     addr.Substring(0, 6) +
                                     "... ? What a weird name.",
                                 options = new List<ConversationOption>()
-                                // options = new System.Collections.Generic.List<ConversationOption> {
-                                //     new ConversationOption {
-                                //         text = "Continue",
-                                //         targetId = "connect2"
-                                //     }
-                                // }
                             };
 
-                        // conversation.Add(c);
-                        // var c = conversation.Get(next);
-                        //c.text = addr.Substring(0, 6) + "... ? What a weird name.";
                         conversation.Add (c2);
                         var ev = Schedule.Add<ShowConversation>(0.25f);
                         ev.conversation = conversation;
