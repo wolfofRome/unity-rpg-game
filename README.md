@@ -103,8 +103,4 @@ public async Task<TransactionResult> BuyItem(string itemId)
     // itemId = ID of the listing on the marketplace, 1 = quantity to buy
     return await GetMarketplaceContract().BuyListing(itemId, 1);
 }
-```
 
-## Got Questions?
-
-Jump into our [Discord](https://discord.com/invite/thirdweb) to speak with our team directly!
